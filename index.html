@@ -509,7 +509,13 @@
 
     loadThingSpeakGraphs();
     refreshAll();
-   
+    setInterval(() => {
+  fetchLatest();
+}, 3000);
+
+setInterval(() => {
+  fetchHistory();
+}, 8000);
   </script>
 </body>
 </html>
