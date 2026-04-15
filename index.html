@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Urban Noise Pollution Monitoring System</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .title {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #555;
+      margin-bottom: 12px;
+      font-size: 17px;
+      text-align: center;
+    }
+
+    .desc {
+      background: white;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      line-height: 1.7;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .label {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .status-banner {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 14px;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .section-title {
+      margin: 26px 0 14px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .small {
+      font-size: 15px;
+      color: #333;
+      line-height: 1.7;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+
+    .legend-card {
+      background: white;
+      padding: 14px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .safe {
+      border-left: 8px solid #1f9d55;
+    }
+
+    .high {
+      border-left: 8px solid #d97706;
+    }
+
+    .harmful {
+      border-left: 8px solid #dc2626;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+    }
+
+    iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+      border-radius: 10px;
+      background: white;
+    }
+
+    .footer {
+      margin-top: 28px;
+      background: white;
+      padding: 16px;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      text-align: center;
+      color: #444;
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .history-harmful {
+      background: #fff1f2;
+    }
+
+    .history-high {
+      background: #fff7ed;
+    }
+
+    a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    @media (max-width: 700px) {
+      .title {
+        font-size: 28px;
+      }
+
+      .value {
+        font-size: 24px;
+      }
+
+      .status-banner {
+        font-size: 20px;
+      }
+
+      th, td {
+        font-size: 12px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">IoT Urban Noise Pollution Monitoring System</div>
+    <div class="subtitle">
+      Public cloud dashboard using Firebase Realtime Database and ThingSpeak
+    </div>
+
+    <div class="desc">
+      This dashboard displays real-time and historical noise monitoring data collected using an ESP32 and MAX4466 acoustic sensor.
+      The system processes sound signals into RMS and approximate dB values, classifies them into SAFE, HIGH, and HARMFUL levels,
+      stores the data in Firebase, and visualizes trends through ThingSpeak graphs.
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Average ADC Value</div>
+        <div class="value" id="avg">--</div>
+      </div>
+
+      <div class="card">
+        <div class="label">RMS Value</div>
+        <div class="value" id="rms">--</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Approximate dB</div>
+        <div class="value" id="db">--</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Peak dB Seen</div>
+        <div class="value" id="peakDb">--</div>
+      </div>
+    </div>
+
+    <div class="status-banner" id="statusBanner">Current Status: --</div>
+
+    <div class="grid" style="margin-top:18px;">
+      <div class="card">
+        <div class="label">Noise Category</div>
+        <div class="small">
+          <span class="badge" id="categoryBadge">--</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Status Code</div>
+        <div class="small" id="statusCode">--</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Latest Timestamp</div>
+        <div class="small" id="timestamp">--</div>
+      </div>
+
+      <div class="card">
+        <div class="label">Latest Cloud Update</div>
+        <div class="small" id="updateInfo">Fetching...</div>
+      </div>
+    </div>
+
+    <div class="section-title">Noise Classification Thresholds</div>
+    <div class="legend">
+      <div class="legend-card safe">
+        <strong>SAFE</strong><br>
+        Noise level is below <strong>62 dB</strong> and is considered acceptable.
+      </div>
+      <div class="legend-card high">
+        <strong>HIGH</strong><br>
+        Noise level is between <strong>62 dB and 78 dB</strong> and should be monitored.
+      </div>
+      <div class="legend-card harmful">
+        <strong>HARMFUL</strong><br>
+        Noise level is <strong>78 dB or above</strong> and may require alerts or preventive action.
+      </div>
+    </div>
+
+    <div class="section-title">ThingSpeak Graphs</div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">RMS Graph</div>
+        <iframe id="rmsGraph"></iframe>
+      </div>
+
+      <div class="card">
+        <div class="label">Approximate dB Graph</div>
+        <iframe id="dbGraph"></iframe>
+      </div>
+
+      <div class="card">
+        <div class="label">Status Graph</div>
+        <iframe id="statusGraph"></iframe>
+      </div>
+
+      <div class="card">
+        <div class="label">Average ADC Graph</div>
+        <iframe id="avgGraph"></iframe>
+      </div>
+    </div>
+
+    <div class="section-title">Recent History</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Avg</th>
+          <th>RMS</th>
+          <th>dB</th>
+          <th>Peak dB</th>
+          <th>Status</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody id="historyBody">
+        <tr><td colspan="7">Loading...</td></tr>
+      </tbody>
+    </table>
+
+    <div class="section-title">Useful Links</div>
+    <div class="grid">
+      <div class="card">
+        <div class="label">ThingSpeak Channel</div>
+        <div class="small">
+          <a id="channelLink" href="#" target="_blank">Open ThingSpeak Channel</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Dashboard Note</div>
+        <div class="small">
+          Live cards and history are loaded from Firebase. Graphs are displayed from ThingSpeak for trend visualization.
+        </div>
+      </div>
+    </div>
+
+    <div id="alertBox" style="
+      display:none;
+      position:fixed;
+      top:20px;
+      right:20px;
+      background:#dc2626;
+      color:white;
+      padding:16px 20px;
+      border-radius:10px;
+      font-weight:bold;
+      box-shadow:0 5px 15px rgba(0,0,0,0.2);
+      z-index:9999;
+    ">
+      ⚠️ Harmful Noise Detected!
+    </div>
+
+    <div class="footer">
+      <strong>Project Team</strong><br>
+      Kamat Varad Gopalkrishna | Dupada Srikar | Sivakoti M.P. Deekshitulu <br>
+      RA2411003050024 | RA2411003050030 | RA2411003050006 <br>
+      Guide : Dr. S. Rahmath Nisha <br>
+      SRM Institute of Science and Technology, Tiruchirappalli
+    </div>
+  </div>
+
+  <script>
+    const FIREBASE_BASE_URL = "https://noise-pollution-monitor-ca71d-default-rtdb.asia-southeast1.firebasedatabase.app";
+    const THINGSPEAK_CHANNEL_ID = "3319563";
+
+    let alertActive = false;
+
+    function showAlert(message = "⚠️ Harmful Noise Detected!") {
+      const box = document.getElementById("alertBox");
+      box.textContent = message;
+      box.style.display = "block";
+
+      setTimeout(() => {
+        box.style.display = "none";
+      }, 3000);
+    }
+
+    function getStatusColor(status) {
+      if (status === "SAFE") return "#1f9d55";
+      if (status === "HIGH") return "#d97706";
+      return "#dc2626";
+    }
+
+    function getCategoryColor(category) {
+      if (category === "Quiet" || category === "Moderate") return "#1f9d55";
+      if (category === "High") return "#d97706";
+      return "#dc2626";
+    }
+
+    function formatTimestamp(ts) {
+      if (ts === undefined || ts === null) return "--";
+      return String(ts);
+    }
+
+    function thingSpeakChart(field, title, color) {
+      return `https://thingspeak.com/channels/${THINGSPEAK_CHANNEL_ID}/charts/${field}?bgcolor=%23ffffff&color=${color}&dynamic=true&results=60&title=${title}`;
+    }
+
+    function loadThingSpeakGraphs() {
+      document.getElementById("rmsGraph").src = thingSpeakChart(1, "RMS", "%231f77b4");
+      document.getElementById("dbGraph").src = thingSpeakChart(2, "Approximate+dB", "%23d62728");
+      document.getElementById("statusGraph").src = thingSpeakChart(3, "Status+Code", "%232ca02c");
+      document.getElementById("avgGraph").src = thingSpeakChart(4, "Average+ADC", "%23ff7f0e");
+      document.getElementById("channelLink").href = `https://thingspeak.com/channels/${THINGSPEAK_CHANNEL_ID}`;
+    }
+
+    async function fetchLatest() {
+      try {
+        const res = await fetch(`${FIREBASE_BASE_URL}/latest.json?nocache=${Date.now()}`, {
+          cache: "no-store"
+        });
+        const data = await res.json();
+
+        if (!data) return;
+
+        document.getElementById("avg").textContent = data.avg ?? "--";
+        document.getElementById("rms").textContent = data.rms ?? "--";
+        document.getElementById("db").textContent = data.db ?? "--";
+        document.getElementById("peakDb").textContent = data.peakDb ?? "--";
+
+        const category = data.category ?? "--";
+        const categoryBadge = document.getElementById("categoryBadge");
+        categoryBadge.textContent = category;
+        categoryBadge.style.background = getCategoryColor(category);
+
+        document.getElementById("statusCode").textContent =
+          data.statusCode !== undefined
+            ? `${data.statusCode} (0 = SAFE, 1 = HIGH, 2 = HARMFUL)`
+            : "--";
+
+        document.getElementById("timestamp").textContent = formatTimestamp(data.timestamp);
+        document.getElementById("updateInfo").textContent = "Latest record received from Firebase";
+
+        const status = data.status ?? "--";
+        const banner = document.getElementById("statusBanner");
+        banner.textContent = `Current Status: ${status}`;
+        banner.style.background = getStatusColor(status);
+
+        if (status === "HARMFUL" && !alertActive) {
+          alertActive = true;
+          showAlert("⚠️ Harmful Noise Level Detected!");
+
+          setTimeout(() => {
+            alertActive = false;
+          }, 5000);
+        }
+      } catch (err) {
+        console.error("Error fetching latest:", err);
+        document.getElementById("updateInfo").textContent = "Unable to fetch latest update";
+      }
+    }
+
+    async function fetchHistory() {
+      try {
+        const res = await fetch(`${FIREBASE_BASE_URL}/history.json?nocache=${Date.now()}`, {
+          cache: "no-store"
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById("historyBody");
+        tbody.innerHTML = "";
+
+        if (!data || Object.keys(data).length === 0) {
+          tbody.innerHTML = "<tr><td colspan='7'>No history available</td></tr>";
+          return;
+        }
+
+        const entries = Object.keys(data).map(key => ({
+          key: key,
+          ...data[key]
+        }));
+
+        entries.sort((a, b) => Number(b.key) - Number(a.key));
+
+        const latest10 = entries.slice(0, 10);
+
+        latest10.forEach(item => {
+          const row = document.createElement("tr");
+
+          if (item.status === "HARMFUL") {
+            row.classList.add("history-harmful");
+          } else if (item.status === "HIGH") {
+            row.classList.add("history-high");
+          }
+
+          row.innerHTML = `
+            <td>${item.timestamp ?? item.key}</td>
+            <td>${item.avg ?? "--"}</td>
+            <td>${item.rms ?? "--"}</td>
+            <td>${item.db ?? "--"}</td>
+            <td>${item.peakDb ?? "--"}</td>
+            <td>${item.status ?? "--"}</td>
+            <td>${item.category ?? "--"}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error("Error fetching history:", err);
+        document.getElementById("historyBody").innerHTML =
+          "<tr><td colspan='7'>Unable to load history</td></tr>";
+      }
+    }
+
+    async function refreshAll() {
+      await fetchLatest();
+      await fetchHistory();
+    }
+
+    loadThingSpeakGraphs();
+    refreshAll();
+    setInterval(refreshAll, 3000);
+  </script>
+</body>
+</html>
